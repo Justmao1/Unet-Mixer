@@ -1,0 +1,58 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Documents
+*.pdf
+
+# Model weights and checkpoints
+*.pth
+*.pt
+*.ckpt
+*.pkl
+*.onnx
+
+# Training outputs
+runs/
+outputs/
+loss_curve.png
+data/result/
+
+# Data (uncomment if you don't want to track data)
+# data/

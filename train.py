@@ -31,6 +31,11 @@ if __name__ == '__main__':
     targetPathTest = "./data/test/DATA_clean"
     resultPathTest = "./data/result"
 
+    # Online noise config: set to a sigma value (e.g., 5) to generate noise on-the-fly
+    # Set to None to use pre-existing noisy/clean image pairs
+    USE_ONLINE_NOISE = False
+    NOISE_LEVEL = 5  # Only used when USE_ONLINE_NOISE is True
+
     os.makedirs(resultPathTest, exist_ok=True)
 
     # Model
@@ -42,7 +47,8 @@ if __name__ == '__main__':
                          step_size=2000, mode='exp_range', gamma=0.99994)
 
     # Data
-    datasetTrain = MyTrainDataSet(inputPathTrain, targetPathTrain)
+    noise_sigma = NOISE_LEVEL if USE_ONLINE_NOISE else None
+    datasetTrain = MyTrainDataSet(inputPathTrain, targetPathTrain, noise_level=noise_sigma)
     trainLoader = DataLoader(dataset=datasetTrain, batch_size=BATCH_SIZE, shuffle=True,
                              drop_last=False, num_workers=0, pin_memory=True)
 

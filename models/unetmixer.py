@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .convmixer import ConvMixer
+from .blurpool import BlurPool
+from .coordinate_attention import CoordinateAttention
 
 
 class conv_block(nn.Module):
@@ -54,10 +56,12 @@ class up_conv(nn.Module):
 
 
 class UNet_mixer(nn.Module):
-    """5-level U-Net with residual conv blocks and optional ConvMixer bottleneck.
+    """5-level U-Net with BlurPool anti-aliasing, Coordinate Attention, and ConvMixer bottleneck.
 
     Encoder: 5 stages, channels  c -> 8c -> 16c -> 32c -> 64c -> 128c
-    Bottleneck: ConvMixer (commented out by default)
+    Downsampling: BlurPool (low-pass filter + strided conv)
+    Attention: Coordinate Attention after each encoder stage
+    Bottleneck: ConvMixer (depthwise separable convolutions)
     Decoder: 4 stages with skip connections
     """
 
@@ -71,6 +75,19 @@ class UNet_mixer(nn.Module):
         self.enc3 = conv_block(in_channels=channel * 16, out_channels=channel * 32)
         self.enc4 = conv_block(in_channels=channel * 32, out_channels=channel * 64)
         self.enc5 = conv_block(in_channels=channel * 64, out_channels=channel * 128)
+
+        # BlurPool anti-aliasing downsampling (replaces raw max_pool2d)
+        self.blur1 = BlurPool(channel * 8)
+        self.blur2 = BlurPool(channel * 16)
+        self.blur3 = BlurPool(channel * 32)
+        self.blur4 = BlurPool(channel * 64)
+
+        # Coordinate Attention after each encoder stage
+        self.ca1 = CoordinateAttention(channel * 8, channel * 8)
+        self.ca2 = CoordinateAttention(channel * 16, channel * 16)
+        self.ca3 = CoordinateAttention(channel * 32, channel * 32)
+        self.ca4 = CoordinateAttention(channel * 64, channel * 64)
+        self.ca5 = CoordinateAttention(channel * 128, channel * 128)
 
         # Bottleneck (ConvMixer)
         self.middle = ConvMixer(channel * 128, kernels_per_layer=1, outplane=channel * 128, kernels_size=7)
@@ -92,15 +109,20 @@ class UNet_mixer(nn.Module):
         self.Conv_1x1 = nn.Conv2d(channel * 8, out_channels, kernel_size=1, stride=1, padding=0)
 
     def forward(self, x):
-        # Encoder
+        # Encoder with BlurPool anti-aliasing + Coordinate Attention
         enc1 = self.enc1(x)
-        enc2 = self.enc2(F.max_pool2d(enc1, kernel_size=2))
-        enc3 = self.enc3(F.max_pool2d(enc2, kernel_size=2))
-        enc4 = self.enc4(F.max_pool2d(enc3, kernel_size=2))
-        enc5 = self.enc5(F.max_pool2d(enc4, kernel_size=2))
+        enc1 = self.ca1(enc1)
+        enc2 = self.enc2(self.blur1(enc1))
+        enc2 = self.ca2(enc2)
+        enc3 = self.enc3(self.blur2(enc2))
+        enc3 = self.ca3(enc3)
+        enc4 = self.enc4(self.blur3(enc3))
+        enc4 = self.ca4(enc4)
+        enc5 = self.enc5(self.blur4(enc4))
+        enc5 = self.ca5(enc5)
 
-        # Bottleneck (uncomment to enable ConvMixer)
-        # enc5 = self.middle(enc5)
+        # Bottleneck ConvMixer
+        enc5 = self.middle(enc5)
 
         # Decoder with skip connections
         up5 = self.Up5(enc5)

@@ -22,6 +22,11 @@ scheduler:
   mode: exp_range
   gamma: 0.99994
 
+# Noise configuration
+noise:
+  use_online_noise: false  # Set true to generate noise on-the-fly
+  noise_level: 5           # Gaussian noise sigma (std dev in [0,255] scale)
+
 # Data paths
 data:
   train_input: ./data/train/DATA_noisy5
