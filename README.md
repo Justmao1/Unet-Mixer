@@ -4,30 +4,29 @@ A deep learning project for **MRI image denoising** using a U-Net architecture e
 
 ## Architecture
 
-```
-Input (1ch, 256x256)
-    |
-    v
-[Encoder]
-    enc1: ConvBlock(1 -> 8)      256x256
-    enc2: ConvBlock(8 -> 16)     128x128  (MaxPool)
-    enc3: ConvBlock(16 -> 32)     64x64   (MaxPool)
-    enc4: ConvBlock(32 -> 64)     32x32   (MaxPool)
-    enc5: ConvBlock(64 -> 128)    16x16   (MaxPool)
-    |
-    v
-[Bottleneck] ConvMixer (optional)
-    |
-    v
-[Decoder]
-    up5: UpConv(128->64) + Cat(enc4) + ConvBlock(128->64)    32x32
-    up4: UpConv(64->32)  + Cat(enc3) + ConvBlock(64->32)     64x64
-    up3: UpConv(32->16)  + Cat(enc2) + ConvBlock(32->16)    128x128
-    up2: UpConv(16->8)   + Cat(enc1) + ConvBlock(16->8)     256x256
-    |
-    v
-[Output] Conv1x1(8 -> 1)    256x256
-```
+### Overall Network Structure
+
+![Overall Network Structure](graph/overall-network-structure.png)
+
+The network follows a U-Net encoder-decoder design with ConvMixer enhancement blocks (U-mixer modules) in the encoder stage. Inputs pass through multiple encoding stages with MaxPool downsampling, are refined by a ConvMixer backbone, and decoded back to the original resolution via bilinear upsampling and concatenation.
+
+### U-mixer Module
+
+![U-mixer Module](graph/U-mixer-moudle.png)
+
+Each U-mixer module contains a residual ConvBlock followed by a ConvMixer block. The ConvMixer applies a 1x1 convolution to expand channels (C → 2C), processes features with depthwise and pointwise convolutions (with residual connections and GELU activation), then projects back (2C → C) and merges with the ConvBlock output via element-wise addition.
+
+### ConvMixer Layer
+
+![ConvMixer Layer](graph/convmixer-layer.png)
+
+Each ConvMixer layer consists of a depthwise convolution (kernel size 7) with residual connection, followed by a pointwise convolution (1x1) with residual connection. BatchNorm and GELU activation are applied after each convolution.
+
+### SKFF Module (Encoder Stage Detail)
+
+![SKFF Module](graph/skff-moudle.png)
+
+The encoder stages use a U-mixer block structure where the input is processed by a ConvBlock (two 3x3 Conv + BatchNorm + ReLU with residual connection) and a ConvMixer block in parallel. The ConvMixer applies layer normalization, depthwise convolution (kernel 3) with residual, and GELU activation. The two paths are fused via element-wise addition.
 
 ### Key Components
 
@@ -87,13 +86,6 @@ data/
 
 Images should be grayscale PNG/TIF format. You can use different noise levels (e.g., `DATA_noisy3` for sigma=3).
 
-### Data Augmentation
-
-To augment training data with 90-degree rotations:
-
-```bash
-python tools/turn90.py --input_dir ./data/train/DATA_clean
-```
 
 ## Usage
 
