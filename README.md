@@ -33,7 +33,7 @@ The encoder stages use a U-mixer block structure where the input is processed by
 | Module | Description |
 |--------|-------------|
 | `conv_block` | Residual convolution block: two 3x3 Conv + BN + ReLU with shortcut connection |
-| `ConvMixer` | Depthwise separable convolution with residual connection (from [ConvMixer paper](https://arxiv.org/abs/2109.04451)) |
+| `ConvMixer` | Depthwise separable convolution with residual connection  |
 | `SKFF` | Selective Kernel Feature Fusion for multi-scale feature aggregation |
 | `CyclicLR` | Cyclic Learning Rate scheduler with exponential range decay |
 
