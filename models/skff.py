@@ -3,13 +3,19 @@ import torch.nn as nn
 
 
 class SKFF(nn.Module):
+    """Selective Kernel Feature Fusion module.
+
+    Fuses multiple feature maps from different scales using
+    channel-wise attention (squeeze-excitation style).
+    """
+
     def __init__(self, in_channels, height=3, reduction=8, bias=False):
         super(SKFF, self).__init__()
 
         self.height = height
         d = max(int(in_channels / reduction), 4)
 
-        self.avg_pool = nn.AdaptiveAvgPool2d(1) # Global Average Pooling(GAP)
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.conv_du = nn.Sequential(nn.Conv2d(in_channels, d, 1, padding=0, bias=bias), nn.LeakyReLU(0.2))
 
         self.fcs = nn.ModuleList([])
@@ -32,7 +38,6 @@ class SKFF(nn.Module):
         attention_vectors = [fc(feats_Z) for fc in self.fcs]
         attention_vectors = torch.cat(attention_vectors, dim=1)
         attention_vectors = attention_vectors.view(batch_size, self.height, n_feats, 1, 1)
-        # stx()
         attention_vectors = self.softmax(attention_vectors)
 
         feats_V = torch.sum(inp_feats * attention_vectors, dim=1)

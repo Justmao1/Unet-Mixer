@@ -1,0 +1,38 @@
+# Training configuration for Unet-Mixer MRI denoising
+
+# Model
+model:
+  in_channels: 1
+  out_channels: 1
+
+# Training
+train:
+  epochs: 100
+  batch_size: 8
+  learning_rate: 1e-4
+  optimizer: adam
+  loss: mse
+  device: cuda:0
+
+# CyclicLR scheduler
+scheduler:
+  base_lr: 1e-4
+  max_lr: 4e-4
+  step_size: 2000
+  mode: exp_range
+  gamma: 0.99994
+
+# Data paths
+data:
+  train_input: ./data/train/DATA_noisy5
+  train_target: ./data/train/DATA_clean
+  val_input: ./data/val/DATA_noisy5
+  val_target: ./data/val/DATA_clean
+  test_input: ./data/test/DATA_noisy5
+  test_target: ./data/test/DATA_clean
+  result_dir: ./data/result
+
+# Checkpoints
+checkpoint:
+  save_best: ./model_best.pth
+  save_latest: ./model.pth

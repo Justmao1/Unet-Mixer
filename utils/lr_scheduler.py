@@ -1,12 +1,20 @@
-import torch
 import numpy as np
 
+
 class CyclicLR(object):
+    """Cyclic Learning Rate scheduler.
+
+    Reference: Leslie N. Smith - "Cyclical Learning Rates for Training Neural Networks"
+
+    Modes:
+        - triangular: standard triangular cycle, no amplitude decay
+        - triangular2: amplitude halves each cycle
+        - exp_range: amplitude decays by gamma^iteration
+    """
+
     def __init__(self, optimizer, base_lr=1e-3, max_lr=4e-3,
                  step_size=2000, mode='triangular', gamma=0.9995,
                  scale_fn=None, scale_mode='cycle', last_batch_iteration=-1):
-
-        #
         self.optimizer = optimizer
 
         if isinstance(base_lr, list) or isinstance(base_lr, tuple):
@@ -65,7 +73,7 @@ class CyclicLR(object):
         return 1 / (2. ** (x - 1))
 
     def _exp_range_scale_fn(self, x):
-        return self.gamma**(x)
+        return self.gamma ** (x)
 
     def get_lr(self):
         step_size = float(self.step_size)
